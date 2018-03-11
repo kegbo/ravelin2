@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Bootstrap 101 Template</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <!-- Latest compiled and minified CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+
+      <!-- Optional theme -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+
+      <style type="text/css">
+body {
+  padding-top: 40px;
+  padding-bottom: 40px;
+  background-color: #eee;
+}
+
+.form-details {
+  max-width: 330px;
+  padding: 15px;
+  margin: 0 auto;
+}
+.form-details .form-details-heading,
+.form-details .checkbox {
+  margin-bottom: 10px;
+}
+.form-details .checkbox {
+  font-weight: normal;
+}
+.form-details .form-control {
+  position: relative;
+  height: auto;
+  padding: 10px;
+  font-size: 16px;
+}
+.form-details .form-control:focus {
+  z-index: 2;
+}
+    </style>
+   
+  </head>
+  <body>
+
+
+
+    <div class="container">
+
+        <h3>Throttling Example</h3>
+<p>getDimensions() has been called <span id="calls">0</span> times</p>
+<p>The current page size is <span id="width"></span>px by <span id="height"></span>px.</p>
+      <form class="form-details" method="post" id="myform"  enctype="application/x-www-form-urlencoded">
+
+        <h2 class="form-details-heading">Details</h2>
+
+        <label for="inputEmail" class="sr-only">Email address</label>
+        <input  onpaste="onPaste(this.id)" type="email" id="inputEmail" class="form-control" 
+        placeholder="Email address" required autofocus>
+
+        <label for="inputCardNumber" class="sr-only">Card Number</label>
+        <input   onpaste="onPaste(this.id)" type="text" id="inputCardNumber" class="form-control" 
+        placeholder="Card Number" required>
+
+        <label for="inputCVV" class="sr-only">CVV</label>
+        <input  onpaste="onPaste(this.id)" type="text" id="inputCVV" class="form-control" 
+        placeholder="Security Code" required>
+
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" value="agree"> Agree to Terms
+          </label>
+        </div>
+
+        <button class="btn btn-lg btn-primary btn-block" type="submit" >Submit</button>
+      </form>
+
+    </div> <!-- /container -->
+
+  </body>
+   <script type="text/javascript">
+        
+        var w = document.querySelector("#width"),
+        h = document.querySelector("#height"),
+        c = document.querySelector("#calls"),
+        delay = 250, // delay between calls
+        throttled = false, // are we currently throttled?
+        calls = 0;
+        var wPrev = 0;
+        var hPrev = 0;
+        var wi = 0;
+        var he = 0;
+        var start = 0;
+        var isTyped = false;
+
+        var form = document.getElementById("myform");
+        function startCounter(){
+              start = Date.now();
+              isTyped = true;
+              console.log("Form has changed!");
+              form.removeEventListener("input",startCounter)
+             
+        }
+        form.addEventListener("input", startCounter);
+        
+        form.addEventListener("submit", onSubmit);
+        
+        // window.resize callback function
+        function getDimensions() {
+          wPrev = wi;
+          hPrev = he;
+          wi = window.innerWidth;
+          he =  window.innerHeight;
+          w.innerHTML = wi;
+          h.innerHTML = he;
+          calls += 1;
+          c.innerHTML = calls;
+          onResize(wPrev,hPrev,wi,he);
+          
+        }
+
+        function onSubmit(){
+          var millis = 0;
+          if(isTyped){
+            millis = Date.now() - start;
+          }
+          
+          var data = JSON.stringify({"type": "timetaken",
+                            "resize" :  { },
+                            "copyandpaste" :  { },
+                            "timetaken" : {
+                            "eventType": "timeTaken",
+                            "websiteUrl": "https://ravelin.com",
+                            "sessionId": "123123-123123-123123123",
+                            "time": millis
+                          }});
+          sendData(data)
+          document.getElementById("myform").action = "/submit";          
+        }
+
+        function onPaste(id){          
+          var data = JSON.stringify({"type": "copypaste", 
+                             "resize" :  { },                           
+                            "copyandpaste" : {
+                            "eventType": "copyAndPaste",
+                            "websiteUrl": "https://ravelin.com",
+                            "sessionId": "123123-123123-123123123",
+                            "pasted": true,
+                            "formId": id
+                          },
+                          "timetaken" :  { }
+                        });
+
+          sendData(data)
+        }
+
+        function onResize(w,h,width,height){
+           var data = JSON.stringify({"type": "resize", 
+                            "resize" : {
+                            "eventType": "screenResize",
+                           "websiteUrl": "https://ravelin.com",
+                           "sessionId": "123123-123123-123123123",
+                           "oldWidth": w,
+                           "oldHeight": h,
+                           "newWidth": width,
+                           "newHeight": height
+                          },
+                          "copyandpaste" :  { },
+                          "timetaken" :  { }
+                        });
+          sendData(data)
+        }
+
+        
+        // window.resize event listener
+        window.addEventListener('resize', function() {
+          // only run if we're not throttled
+        if (!throttled) {
+          // actual callback action
+          getDimensions();
+          // we're throttled!
+          throttled = true;
+          // set a timeout to un-throttle
+          setTimeout(function() {
+            throttled = false;
+          }, delay);
+        }  
+        });
+
+        getDimensions();
+
+        function sendData(data) {
+          
+          var xhr = new XMLHttpRequest();
+          var url = "/data";
+          xhr.open("POST", url, true);
+          xhr.setRequestHeader("Content-type", "application/json");
+          
+         
+          xhr.send(data);
+          }
+
+  </script>
+
+
+</html>
+
